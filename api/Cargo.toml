@@ -1,0 +1,11 @@
+[package]
+name = "digital-signage-api"
+version = "0.1.1"
+edition = "2021"
+
+[dependencies]
+serde = "1"
+serde_derive = "1"
+uuid = { version = "1.8", features = ["v4", "serde"]}
+zeroconf = "0.15"
+color-eyre = "0.6"

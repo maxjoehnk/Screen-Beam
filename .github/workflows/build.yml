@@ -1,0 +1,103 @@
+on: [push]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_client:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    steps:
+    - name: Install native dependencies
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install \
+          libavahi-client-dev \
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+    - uses: Swatinem/rust-cache@v2
+    - name: Release build
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release --all-features -p digital-signage-client
+    - run: zip -r digital-signage-client.zip target/release/digital-signage-client
+    - uses: actions/upload-artifact@v4
+      with:
+        name: client-${{ matrix.os }}
+        path: digital-signage-client.zip
+
+  build_server:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    steps:
+      - name: Install native dependencies
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install \
+          libavahi-client-dev \
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Release build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --all-features -p digital-signage-server
+      - run: zip -r digital-signage-server.zip target/release/digital-signage-server
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-${{ matrix.os }}
+          path: digital-signage-server.zip
+
+  build_manager:
+    runs-on: ${{ matrix.target.os }}
+    strategy:
+      matrix:
+        target:
+          - os: ubuntu-latest
+            target: linux
+            path: linux/x64/release/bundle
+          - os: macos-latest
+            target: macos
+            path: macos/Build/Products/Release/digital_signage.app
+          - os: ubuntu-latest
+            target: apk
+            path: app/outputs/flutter-apk/app-release.apk
+          # TODO: zip is not available on windows, 7za should be used here in the future
+          #- os: windows-latest
+          #  target: windows
+          #  path: windows/x64/runner/Release
+    steps:
+      - name: Install native dependencies
+        if: ${{ matrix.target.target == 'linux' }}
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build libgtk-3-dev
+      - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.24.3
+      - run: flutter build ${{ matrix.target.target }} --release
+        working-directory: app
+      - run: zip -r digital-signage-manager.zip app/build/${{ matrix.target.path }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ matrix.target.target }}
+          path: digital-signage-manager.zip

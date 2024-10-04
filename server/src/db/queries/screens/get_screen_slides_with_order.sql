@@ -1,0 +1,1 @@
+select slide_id, ordering from screen_slides where screen_id = ?1 order by ordering;

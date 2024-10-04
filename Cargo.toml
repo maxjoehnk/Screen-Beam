@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "api",
+    "server",
+    "client",
+]
+resolver = "2"
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3
