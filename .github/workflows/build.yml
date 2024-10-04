@@ -76,9 +76,9 @@ jobs:
           - os: macos-latest
             target: macos
             path: macos/Build/Products/Release/digital_signage.app
-          - os: ubuntu-latest
-            target: apk
-            path: app/outputs/flutter-apk/app-release.apk
+              #- os: ubuntu-latest
+              #  target: apk
+              #  path: app/outputs/flutter-apk/app-release.apk
           # TODO: zip is not available on windows, 7za should be used here in the future
           #- os: windows-latest
           #  target: windows
